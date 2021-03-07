@@ -1,0 +1,387 @@
+\documentclass{article}  
+
+\usepackage{booktabs}
+\usepackage{hyperlatex}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{color}
+
+\htmldepth{1}
+\htmltitle{CS 150}
+\htmladdress{lusth@cs.ua.edu}
+\htmlcss{lusth.css}
+
+\T\setlength\parskip{6 pt}
+\T\setlength\parindent{0 in}
+
+\W\newcommand\sc\bf
+
+\title{CS150 Honors: Project 2\\
+\date{Revision Date: \today}}
+
+\author{Michael G. Raines (modified by John C. Lusth)}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\W\subsubsection*{\xlink{Printable Version}{project2.pdf}}
+\W\htmlrule
+
+\section*{Preamble}
+
+This is your third C assignment.  You may develop your code anywhere,
+but you must ensure it runs correctly when compiled by {\it gcc}
+on a Linux or Unix system
+before submission.
+You should read up to and include the textbook chapter
+\xlink{Lists and Loops}{../book/index_20.html}
+before starting this project.
+
+%Spring 2011
+
+\section*{Logging in the Cloud} 
+
+\begin{quote}
+When a jar is broken, the space that was inside\\
+Merges into the space outside.
+-- 
+{\it Avadhuta Gita}
+\end{quote}
+
+
+{\it Welcome to LogSoft}!
+Here at Logsoft we specialize in designing and maintaining logging software.
+
+What does logging
+software do, you ask?
+As your computer or server goes about doing various things,
+we would like to keep track of who is doing what and at what time.
+In order to do this, we write 
+information concerning the commands people run
+to a file as the system is running.
+
+Because of our impending move to the cloud, we will need to join 
+logs from individual servers to one master log.
+Your task is to prototype a program that
+merges two individual logs into a single log, sorted
+by timestamps. Because the individual logs are also
+sorted by timestamp, you should be able to merge them
+without resorting to sorting the final result.
+
+Here is an example of a logfile:
+
+\begin{verbatim}
+   @ 2014 2 14 00:03:01 Mary "login" 0.01
+   @ 2014 2 14 02:06:12 Matt "login" 0.01
+   # concurrent logins: 20
+   @ 2014 2 14 07:12:05 Mary "cd ~/cs150/projects" 0.01
+   @ 2014 2 14 12:33:52 Steven "firefox&" 0.13
+   @ 2014 2 14 12:33:52 Steven "load http://yahoo.com" 0.01
+   @ 2014 2 14 14:42:27 Steven "exit" 0.00
+\end{verbatim}
+
+The format of a single record in a logfile is:
+
+\begin{center}
+\begin{tabular}{ccc}%
+\T\toprule
+    {\sc field} & ~~~~~~~~~~~ & {\sc type} \\
+\T\midrule
+    {\it type}       & & character\\
+    {\it year}       & & integer\\
+    {\it month}      & & integer\\
+    {\it day}        & & integer\\
+    {\it timestamp}  & & string\\
+    {\it user}       & & string\\
+    {\it command}    & & quoted string\\
+    {\it op cost}    & & real\\
+\T\bottomrule
+\end{tabular}
+\end{center}
+
+If the type field is a \verb!#! character, the entire line is a comment.
+
+Your task is to create a program named {\it logmerge.c}
+that takes, as input, two
+logfile names on the command line.
+The program reads the individual logs,
+then writes out the merged records
+plus some information about the total costs incurred by
+the users found in merged logfile.
+
+\section*{I/O}
+
+Suppose file {\it log.1} has the records:
+
+\begin{verbatim}
+   @ 2014 2 14 00:03:01 Matt "login" 0.01
+   # server down
+   @ 2014 2 14 02:06:12 Mary "login" 0.01
+   @ 2014 2 14 17:12:05 Mary "cd ~/cs150/projects" 0.01
+\end{verbatim}
+
+and file {\it log.2} has the records
+
+\begin{verbatim}
+   @ 2014 2 13 12:33:52 Boris "firefox&" 0.13
+   @ 2014 2 14 12:33:52 Boris "load http://yahoo.com" 0.01
+   @ 2014 2 15 03:42:27 Natasha "exit" 0.00
+\end{verbatim}
+
+Then running the program should give the following output:
+
+\begin{verbatim}
+    $ logmerge log.1 log.2
+    @ 2014 2 13 12:33:52 Boris "firefox&" 0.13
+    @ 2014 2 14 00:03:01 Matt "login" 0.01
+    @ 2014 2 14 02:06:12 Mary "login" 0.01
+    @ 2014 2 14 12:33:52 Boris "load http://yahoo.com" 0.01
+    @ 2014 2 14 17:12:05 Mary "cd ~/cs150/projects" 0.01
+    @ 2014 2 15 03:42:27 Natasha "exit" 0.00
+    # total cost: $0.17
+\end{verbatim}
+
+Note that the lines beginning with \verb!#! are comments, which are
+removed when reading in records.
+
+The last line of the merged output should be a comment
+giving the total cost
+of all operations. This information is gleaned from the
+last field, the {\it op cost}, in the set of records.
+The total cost is the sum of
+all the individual op costs.
+
+Should your program be called with fewer than the required number
+of arguments, it should generate a meaningful error message and then
+exit.
+
+\section*{Command-line Arguments}
+
+Here is a short C program that checks if there are three 
+command-line arguments beyond the name of the file.
+If so, the program prints out the three arguments:
+
+\begin{verbatim}
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc,char **argv)
+        {
+        // check to see if there are three arguments
+        // look at the length of sys.argv
+        // argv holds the name of the program plus the arguments
+
+        printf("the program name is %s\n",argv[0]);
+        if (argc == 4)
+            {
+            printf("argument 1 is %s\n",argv[1]);
+            printf("argument 2 is %s\n",argv[2]);
+            printf("argument 3 is %s\n",argv[3]);
+            }
+        else
+            {
+            printf("incorrect number of arguments\n");
+            exit(1):
+            }
+        return 0;
+        }
+\end{verbatim}
+
+\section*{Requirements}
+
+You must place your {\it main} function in the file {\it logmerge}.c
+and all your other functions in {\it logger.c}.
+You must place all the function
+prototypes derived from the functions in {\it logger.c} in {\it logger.h}.
+The {\it logmerge.c} file should include the {\it logger.h} file,
+NOT the {\it logger.c} file.
+
+You must use the scanner for this project:
+
+\begin{verbatim}
+    wget troll.cs.ua.edu/cs150H/book/scanner.c
+    wget troll.cs.ua.edu/cs150H/book/scanner.h
+\end{verbatim}
+    
+Only {\it logger.c} should include {\it scanner.h}.
+
+To compile your final program, use the command:
+
+\begin{verbatim}
+    gcc -Wall -g -o logmerge logmerge.c logger.c scanner.c -lm
+\end{verbatim}
+
+You must also define and use
+the following functions:
+
+\begin{itemize}
+\item
+         a function to read an individual record given a scanner -- this
+         function must be used to read both logfiles by passing in
+         a different scanner -- the function returns a single record --
+         the function should skip over comments -- more than one
+         comment in a row may appear
+
+\item
+     a function to read a logfile into a table -- this function
+     should be passed the name of the file to read, opening up
+     a scanner to read it -- the function should make use of
+     the function that reads records -- it should return a table
+     (i.e. an list of records)
+
+\item
+     a function that determines which of two records has the
+     earlier date and timestamp -- it should return true if
+     the first record is earlier than the second and false otherwise
+
+\item
+     a function to merge two tables -- it returns the a new table
+     holding the merged records -- it makes use of the function that
+     decides which of two records has an earlier timestamp
+\end{itemize}
+
+\section*{Stepwise Refinement}
+
+This program implements the merge pattern, using records, to combine the
+individual logfiles.
+
+\begin{enumerate}
+\item
+    Write a program named {\it printRecord.c} that reads in a single
+record from the first logfile, prints it, and exits.
+
+\item
+Write a program named {\it printRecords.c} that loops over all
+records in the first logfile, reading in a single record and printing
+it before reading in the next record.
+
+\item
+Write a program named {\it printAllRecords.c} that does what 
+{\it printRecords.c} does and then
+does the same for
+the second logfile.
+You should not write any new functions
+to do this.
+
+\item
+Write a program named {\it printTable.c} that loops over all
+records in the first logfile, reading in a single record and storing
+it in a table. After all records have been stored in the table,
+loop through the table and print each record in turn.
+
+\item
+Write a program named {\it printBothTables.c}
+that does what {\it printTable.c}
+does and then does the same for the second logfile.
+You should not write any new functions
+to do this.
+
+\item
+Write a program named {\it merger.c} that reads both logfiles into a
+table and then merges the two tables into a third table. It should then
+print all the records in the third table.
+
+\item
+Write the final version of your program; it does what {\it merger.c} does
+and then loops through the records accumulating the op costs. It then
+prints the total.
+
+\end{enumerate}
+
+\section*{Crafting a Makefile}
+
+You will receive 10 extra credit points for a completely correct and
+functioning makefile. Your makefile
+must be named with a lowercase initial ``em'' and should be structured as
+outlined in the {\it module} activity. You must have a {\it clean} rule.
+
+\section*{Compliance Instructions}
+
+To make sure that you have implemented your
+program correctly,  create two files, one named {\it alpha} and one
+named {\it beta}. Fill these files with records, making sure one
+of the files has at least two comments in a row. Then run the
+command:
+
+\begin{verbatim}
+    $ gcc -Wall -g -o logmerge logmerge.c logger.c scanner.c -lm
+    $ logmerge alpha beta
+\end{verbatim}
+
+This test should yield the expected output.
+\color{red}
+If your code fails with a runtime error while running this test,
+then you will
+receive a zero for this assignment.
+\color{black}
+Note that your output does not have to be correct for your program
+to be graded, only that it not fail.
+Now run this command:
+
+\begin{verbatim}
+    $ logmerge alpha
+\end{verbatim}
+
+For this test, the program should generate a meaningful error message
+(not an index out of range error). Now run the command:
+
+\begin{verbatim}
+    $ logmerge
+\end{verbatim}
+
+The results of this test should be the same as the previous test.
+
+Programs submitted that generate compilation warnings will receive at
+least a 5 point deduction.
+
+\section*{Challenges}
+
+Add an additional command-line
+argument; if present, it is the name of the file in which to write
+the merged logfile. If missing, the merged logfile should be
+written to {\it stdout}, as before.
+Using the example from above, if this command is given:
+
+\begin{verbatim}
+    $ logmerge log.1 log.2 log.m
+\end{verbatim}
+
+then the same output that was written to {\it stdout}
+is written to the file {\it log.m} instead.
+In fact, these two commands should be equivalent:
+
+\begin{verbatim}
+    $ logmerge log.1 log.2 > log.m
+    $ logmerge log.1 log.2 log.m
+\end{verbatim}
+
+The former redirects the output of the {\it logmerge} program from the
+console to the file {\it log.m}. The latter writes the output directly
+to {\it log.m}.
+
+Use structures to store records and linked lists to store a set of
+tables.
+
+\section*{Submission Instructions}
+
+Change to the directory containing your assignment.  Do an
+{\it ls} command to make sure you are in the correct place.
+You should see, at least, your {\it logmerge.c} file as well
+as your programs written as part of the stepwise refinement.
+Extra files are OK. Submit your program like this:
+
+\begin{verbatim}
+    submit cs150 YYYY project2
+\end{verbatim}
+
+Remember to replace \verb!YYYY! with your instructor name.
+
+\section*{Due Date}
+
+The due date for this assignment can be found on the class
+\xlink{schedule}{../schedule.html}.
+
+\end{document}

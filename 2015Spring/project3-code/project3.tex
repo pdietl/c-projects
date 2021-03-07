@@ -1,0 +1,527 @@
+\documentclass[12pt]{article}
+\usepackage{hyperlatex}
+
+%\usepackage{enumitem}
+\usepackage{ulem}
+\usepackage[compact,medium,sc]{titlesec}
+\usepackage{booktabs}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{pslatex}
+\usepackage{color}
+
+% paragraph style
+
+\setlength\parskip{10pt}
+\setlength\parindent{0in}
+
+\W\newcommand{\sf}{\bf}
+
+\htmltitle{CS100: Project 3}
+\htmldepth{1}
+\htmladdress{\xlink{lusth@cs.ua.edu}{mailto: lusth@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\title{CS100: Project 3\\
+\date{Revision Date: \today}}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\W\subsubsection*{\xlink{Printable Version}{project3.pdf}}
+\W\htmlrule
+
+%Spring 2015
+
+\section*{Preamble}
+
+\begin{quote}
+{\it A Picture is Worth a Thousand Words}
+\end{quote}
+
+Are you a visual person?  If you had a choice between a map and a set of written
+directions, which would you use to find a new restaurant?  Would it have been
+easier to code the last project if the flowchart had been replaced by a detailed
+set of instructions on how to handle each case?
+
+In the early days of the Internet, people constructed browsers that were entirely
+text based (ask an old person if they remember {\tt Gopher}).  However, today's web
+is filled with pictures.
+
+Pictures can be stored in many formats.  You've probably heard of the more common
+ones, such as {\tt jpeg} (from the Joint Photographic Experts Group)
+and {\tt gif} (Graphics Interchange Format).
+The vast majority of these formats store the image data in
+a binary file.
+
+There is one format, {\tt ppm}, that can use {\tt ASCII} files
+to store an image.  These {\tt ppm} files consist of header information
+and then a long string of numbers representing the {\it red}, {\it green} and
+{\it blue} components of each pixel in the image.  It is not widely used, however.
+Since the images are all stored in {\tt ASCII}, they are much larger than
+using other (binary) formats.  Nevertheless, since these files contain {\tt ASCII}
+data, they are a good format to use in introductory programming classes.
+
+The {\tt ppm} format that is used for this project is shown below:
+
+\begin{verbatim}
+P3
+width-in-pixels  height-in-pixels
+maximum-color-value
+pixel-1-1-red pixel-1-1-green pixel-1-1-blue  pixel-1-2-red pixel-1-2-green pixel-1-2-blue ...
+pixel-2-1-red pixel-2-1-green pixel-2-1-blue  pixel-2-2-red pixel-2-2-green pixel-2-2-blue ...
+...
+pixel N-1-red pixel-N-1-green pixel-N-1-blue  pixel-N-2-red pixel-N-2-green pixel-N-2-blue ...
+\end{verbatim}
+
+The very first line in a {\tt ppm} file is always {\bf P3}.  After that, you have
+three values (width, height, colors) that can be on a single line or separate lines.
+Finally, you have the actual RGB values (three integers) for each pixel in the image.
+
+So a very tiny {\tt ppm} file that is four pixels wide and 10 pixels tall, with the top
+half red and the bottom half blue, would be represented by:
+
+\begin{verbatim}
+P3
+4 10
+255
+255 0 0  255 0 0  255 0 0  255 0 0
+255 0 0  255 0 0  255 0 0  255 0 0
+255 0 0  255 0 0  255 0 0  255 0 0
+255 0 0  255 0 0  255 0 0  255 0 0
+255 0 0  255 0 0  255 0 0  255 0 0
+0 0 255  0 0 255  0 0 255  0 0 255
+0 0 255  0 0 255  0 0 255  0 0 255
+0 0 255  0 0 255  0 0 255  0 0 255
+0 0 255  0 0 255  0 0 255  0 0 255
+0 0 255  0 0 255  0 0 255  0 0 255
+\end{verbatim}
+
+A {\tt ppm} file does not concern itself with the number of spaces (or tabs or newlines)
+between the values in the file.
+
+\section*{Before You Start}
+
+This project does some basic manipulations on {\tt ppm} images.  Specifically,
+your must must be able to swap (left to right), flip (top to bottom), rotate, and
+invert a {\tt ppm} image.
+
+A set of sample images can be retrieved from troll via:
+
+\begin{verbatim}
+wget troll.cs.ua.edu/cs100/squares.ppm
+wget troll.cs.ua.edu/cs100/alabama.ppm
+wget troll.cs.ua.edu/cs100/cake.ppm
+wget troll.cs.ua.edu/cs100/mountain.ppm
+\end{verbatim}
+
+In order to see if your program is working properly,
+you need to be able to view these images.  Your system might (or might not)
+have a viewer that supports {\tt ppm} images.  If it does not, then we
+recommend you download the free program GIMP (GNU Image Manipulation Program).
+You can find the download page for GIMP 
+\xlink{here}{http://www.gimp.org/downloads/}.
+
+Note: You can use GIMP to convert additional pictures into {\tt ppm} format
+for testing if you wish.  Simply load an existing image that you have into
+GIMP and then select the "Export As" option and a filetype of PPM image.  Make
+sure to click {\tt ASCII} when asked how to export.  As part of this project,
+you need to generate one new {\tt ppm} file.  It can be any image that you want.
+
+Another Note:  When you use {\tt GIMP} to convert an image into
+a {\tt ppm} file, it puts
+a comment on the second line (between the {\tt P3} and the number of rows and
+columns and colors.  You need to delete that comment line, as our program
+does not handle comments in {\tt ppm} files.
+
+\section*{How to Start}
+
+First, establish a directory in which you will work.
+Run the following commands in a terminal window, one at a time:
+
+\begin{verbatim}
+    cd
+    cd cs100
+    mkdir -p projects/project3
+    cd projects/project3
+\end{verbatim}
+
+Name your main module {\tt image.c}.
+If you want to use the CS 100 scanner routines, then you
+will also need to copy the {\tt scanner.h} and
+{\tt scanner.c} files from {\it troll} into this directory.
+You will also create a module for the PPM image structure, 
+{\tt ppm.c} and {\tt ppm.h}.
+
+All input to this program is given via the command line.  The last
+command line argument should always be the {\tt ppm} image file.
+The user can specify one or more manipulations for this file,
+as shown below.  The four manipulations on a file are:
+
+\begin{itemize}
+\item {\tt -i} or {\tt --invert}, which inverts all the pixels
+in the image
+\item {\tt -f} or {\tt --flip}, which flips the image from top
+to bottom
+\item {\tt -s} or {\tt --swap}, which swaps the image from left
+to right
+\item {\tt -r} or {\tt --rotate}, which rotates the image
+90 degrees clockwise
+\item {\tt -o} or {\tt --output}, which specifies an output
+file name where the modified image should be written.  By
+default, you should write the new image to {\tt stdout}.
+\end{itemize}
+
+Note that we are handling both styles of command line arguments
+in this program, the single-dash and one-character argument, as
+well as a double-dash and full-word argument.  In the Unix
+world, the single-dash/one-character format was the standard
+20 years ago, it is slowly being replaced by the double-dash/full-word
+format.
+
+Samples of program execution are shown below:
+
+\begin{verbatim}
+    ./image -f mountain.ppm
+    ./image -f -i -r alabama.ppm
+    ./image -s -o new.ppm squares.ppm
+    ./image --swap --invert cake.ppm
+    ./image --flip --output newFile.ppm mountain.ppm
+\end{verbatim}
+
+If the {\tt ppm} file specified as the
+last command line argument actually exists (via the fact that
+the {\it fopen} command does not fail), then you may assume that the
+contents of the file represent a value {\tt ppm} image.
+
+\section*{Organizing this Project}
+
+When completing this project, you must adhere to a few basic
+development guidelines.  These guidelines are described in the
+subsections below.
+
+\subsection*{Create a Pixel Struct and a PPM Struct}
+You {\bf must} use the two {\tt struct}s shown below 
+to store the {\tt ppm} image that you read from the input file.
+These should be declared in {\tt ppm.h}.
+
+\begin{verbatim}
+#ifndef PPM_STRUCT                          #ifndef RGB_STRUCT
+#define PPM_STRUCT                          #define RGB_STRUCT
+
+typedef struct ppm {                        typedef struct pixel {
+    int rows;   // number of rows               int red;   // red value
+    int cols;   // number of columns            int green; // green value
+    int colors; // number of colors             int blue;  // blue value
+    Pixel **pixels; // actual pixel data    } Pixel;
+} ppmPic;
+                                            #endif
+#endif
+\end{verbatim}
+
+In the {\tt ppmPic} structure, the first three fields
+should be fairly obvious.  The first and second, {\it rows} and
+{\it cols}, are the number of rows and the number of columns in the file.
+The third, {\it colors}, is the maximum color depth.
+You get these values when you actually read the file data.
+
+After this, you have {\tt Pixel **pixels}.  This represents the two-dimensional
+array that holds all the R-G-B values for each pixel in the image.
+
+It is {\bf critical} that you understand the {\tt pixels} part of a
+{\tt ppmPic} struct.  This is a dynamically-allocated two-dimensional
+array of integers that contain the RGB values for each pixel in the image.
+
+In order to help you understand how these data structures work, we've
+constructed a (primitive) picture
+\xlink{picture}{http://troll.cs.ua.edu/cs100/projects/project3picture.pdf}.
+that helps illustrate the use of these
+data structures and also provided you a simple example of a {\tt ppm} file
+and how it would be stored.
+
+Suppose you had the (very small) image shown below.  It is only 4 pixels wide
+and six pixels tall. The top two rows are pure read, the middle two rows
+are pure green, and the last two rows are pure blue.
+
+\begin{verbatim}
+P3
+4 12
+255
+255 0 0  255 0 0  255 0 0  255 0 0
+255 0 0  255 0 0  255 0 0  255 0 0
+0 255 0  0 255 0  0 255 0  0 255 0 
+0 255 0  0 255 0  0 255 0  0 255 0 
+0 0 255  0 0 255  0 0 255  0 0 255
+0 0 255  0 0 255  0 0 255  0 0 255
+\end{verbatim}
+
+To allocate space for this image, you need to allocate six rows of data,
+where each row is a pointer to the first Pixel within the row.
+
+\begin{verbatim}
+    Pixel **pixels;
+    pixels = malloc(sizeof(Pixel *) * 6);
+\end{verbatim}
+
+Once you have these six pointers (pointing to the first Pixel in each
+row), you then need to allocate space for the four Pixels on each row.
+
+\begin{verbatim}
+    myPic->pixels[i] = malloc(sizeof(Pixel) * 4);
+\end{verbatim}
+
+To reference an individual value within this two-dimensional array,
+you can use either subscript notation or pointer notation.  The
+notation {\tt data[a][b]} is equivalent to {\tt *(*(data+a)+b)}.
+
+One final reminder, when you declare this struct,
+be sure to surround this definition with {\tt \#ifndef} and {\tt \#endif},
+as demonstrated in class for other user-defined data types, so that these
+two new types, {\tt Pixel} and {\tt ppmPic}, are only defined once.
+
+\subsection*{What do the Various Operations Do?}
+
+There are four manipulation options that you have to implement for this project.  Each
+of them is described below.
+
+\begin{itemize}
+\item Invert - We recommend you implement this one first, it is the easiest
+option.  For each pixel in the file, you simply {\it invert} the red and green
+and blue values.  To invert a value, the new value is simply the number of
+possible colors for that picture (a field within your struct) minus the current
+value.  For example, if you have 255 colors in a picture and a pixel currently
+as an RGB value of (200,100,50), then inverting it would yield
+(255-200,255-100,255-50), or (55,155,205).
+\item Swap - Swap is designed to swap the image from left to right.  Basically,
+for a given row, the first pixel in that row is now the last pixel and the last
+pixel in the row is now the first pixel.  For swap, you can simply move
+from the top of the picture to the bottom, swapping the pixels left-to-right
+and right-to-left, as you move down through the picture.  Remember that each
+pixel has three values (red and green and blue), so you are swapping in
+groups of three.
+\item Flip - Flip is designed to flip the image from top to bottom.  The very
+top row is now the bottom row, and the bottom row is now the top row.  So you
+are moving entire rows of data up and down within the image.
+\item Rotate - Rotate is designed to rotate the image 90 degrees clockwise.
+As you do this, the number of rows and columns changes.  The number of rows
+(height) of the original image is now the width of the new image.  The
+number of columns (width) of the original image is now the height of the 
+new image.  To implement this, you will need to allocate a new {\tt data}
+block that stores the RGB values for all the pixels in the image and then
+fill in the new {\tt data} block with values from the current image.  Once it is
+fully populated, update the image object to point to this new block of data.
+\end{itemize}
+
+For each of these transformations, we recommend that you draw a simple picture
+on a grid and then observe what happens if you flip the piece of paper upside
+down, swap it left to right, or rotate it 90 degrees.  It will probably
+help to draw an image that is rectangular and not square.
+
+\subsection*{Functions in your Program}
+
+At a minimum, your {\tt ppm} module should have six functions.  Your main
+routine simply processes the various command line arguments and calls functions within
+the {\tt ppm} module as needed.
+
+\begin{itemize}
+\item Four functions that handle the swap (left to right), flip (top to bottom),
+inverse, and rotation of an image.
+\item Two functions that handle I/O, a {\tt readPic} and a {\tt writePic} function.
+We suggest that {\tt readPic} takes a {\tt FILE *} as its one argument and
+returns a newly allocated {\tt ppmPic} that represents the information stored
+in that file.
+We suggest that {\tt writePic} takes a {\tt ppmPic} structure and a {\tt FILE *}
+and simply writes the information int the {\tt ppmPic} structure to the specified
+file.  If the user never specified a {\tt -o} or {\tt --output} option on the
+command line, then you write to {\tt stdout}.
+\end{itemize}
+
+You may introduce more functions if you wish.  As a general rule, none of the
+functions you write should ever be more than 50 lines in length.  We encourage
+short functions that perform a single task.  Long, complex functions are an
+easy way to get stuck on projects.
+
+\subsection*{Program Input}
+
+As mentioned earlier, all input comes from the command line.  The last command
+line argument represents the {\tt ppm} file and the other command line arguments
+are some combination of {\tt -f}, {\tt --flip},
+{\tt -s}, {\tt --swap}, {\tt -i}, {\tt --invert}
+and {\tt -r}, {\tt --rotate}.
+In addition, if the user specified {\tt -o} or {\tt --output} then you should
+write the new {\tt ppm} file to the argument specified immediately after the
+{\tt -o} (or {\tt --output}) argument.  If the user does not specify an output
+file location, write the new file to standard output ({\tt stdout}).
+
+If the user simply types the name of the executable, as in {\tt ./image} then 
+you should print a short message explaining how to use the program.
+
+You can use the scanner module to read the {\tt ppm} file contents into your
+structure if you wish.
+
+\subsection*{Program Output}
+
+The output from this program is the modified {\tt ppm} file.  As
+mentioned above, if the user
+specifies an output file name, via either {\tt -o} or {\tt --output}, then
+write to that file.  Otherwise, write to {\tt stdout}.
+
+\subsection*{Testing Your Program}
+
+When you use real images, a {\tt ppm} file gets big quickly.  For example,
+the {\tt mountain.ppm} file contains over 50 million characters.  This makes
+debugging on real files problematic.  However, if you use really small files
+then it is hard to see them using {\tt GIMP} or other image display software,
+they are just too small.
+
+One suggested option for debugging is to create a very small image, such
+as the one shown below, in a file (use whatever name you want, such as
+{\tt myTest.ppm}.
+
+\begin{verbatim}
+P3
+4 9
+255
+200 0 0   150 0 0   100 0 0   50 0 0
+200 0 0   150 0 0   100 0 0   50 0 0
+200 0 0   150 0 0   100 0 0   50 0 0
+0 200 0   0 150 0   0 100 0   0 50 0
+0 200 0   0 150 0   0 100 0   0 50 0
+0 200 0   0 150 0   0 100 0   0 50 0
+0 0 200   0 0 150   0 0 150   0 0 50
+0 0 200   0 0 150   0 0 150   0 0 50
+0 0 200   0 0 150   0 0 150   0 0 50
+\end{verbatim}
+
+This image is small enough that you should be able to examine the output
+your program generated for accuracy.  For example, the {\tt -f} or {\tt --flip}
+option should mean that your new first row is:
+
+\begin{verbatim}
+    50 0 0   100 0 0   150 0 0   200 0 0
+\end{verbatim}
+
+Likewise, the {\tt -i} or {\tt --invert} option should give you a first row of:
+
+\begin{verbatim}
+    55 255 255   105 255 255   155 255 255   205 255 255
+\end{verbatim}
+
+Note, if you try and view {\tt foo.ppm} using {\tt GIMP} or other software,
+you will need to increase the view to 400\% or 800\% or 1600\% of the actual size
+(if you want to see it clearly).
+
+We {\bf strongly} recommend that you test your program using a small image
+such as the one described above.
+
+\subsection*{A Makefile is Required}
+
+Please make sure to generate a {\tt makefile} for this project and include it in your
+submission.  Since you at least two modules in this project,
+{\tt image.c} and {\tt ppm.c}, and possibly {\tt scanner.c},
+you should include a {\tt makefile} that
+allows you to compile this project cleanly and easily.
+
+Your makefile should respond to the commands:
+
+\begin{description}
+\item[make] typing \verb!make! should have your makefile build your executable
+\item[make clean] typing \verb!make clean! should remove the object files and the executable
+\end{description}
+
+Your makefile should never perform any unnecessary compilations.
+
+\section*{Challenges}
+
+Challenge One: Add a {\tt -gray} option.  This option would create a grayscale
+version of the image.  This version only has one value per pixel.  When
+converting from color to grayscale, a good formula is
+$val = 0.21R + 0.72G + 0.07B$ as humans are more sensitive to green.
+In this case, write the new file to a {\tt .pgm} file instead of {\\ tt .ppm}.
+The format for a {\tt .pgm} file is:
+
+\begin{verbatim}
+P2
+width-in-pixels  height-in-pixels
+maximum-gray-value
+pixel-1-1 pixel-1-2 ... pixel-1-M
+pixel-2-1 pixel-2-2 ... pixel-2-M
+...
+pixel-N-1 pixel-N-2 ... pixel-N-M
+\end{verbatim}
+
+Challenge Two: 
+
+\section*{Compliance Instructions}
+
+First, check to make sure that you are using proper programming
+style for this project.  The document
+\xlink{style}{../style.html} contains a number of expected
+conventions that must be followed for this project (as well as all
+future projects).  Please make sure your program adheres to the
+requirements identified in the 
+\xlink{style guide}{../style.html}.
+
+Second, create a file named {\it image.ppm} that contains a sample image, one
+that you created, and used to test your program.
+
+Make sure to test your makefile with the commands:
+
+\begin{verbatim}
+    $ make
+    $ make clean
+\end{verbatim}
+
+\section*{Checklist}
+
+Did you:
+
+\begin{itemize}
+\item
+    name your main module {\it image.c}?
+\item
+    prints an error message if given an invalid option (such as {\tt -change})?
+\item
+    place your functions in the proper modules?
+\item
+    ensure your program creates a new file and saves the old in a {\tt .old}?
+\item
+    comment your modules sufficiently?
+\item
+    test your makefile thoroughly
+\end{itemize}
+
+Note: this list is not exhaustive! There may be other specifications
+and requirements not listed here.
+
+\section*{Submission Instructions}
+
+Change to the {\it project3} directory containing your assignment.  Do an
+{\it ls} command. You should see something like this:
+
+{\color{red} image.c ~~ ~~ image.h ~~ io.c ~~ io.h ~~ manip.c ~~ manip.h
+~~ makefile ~~ scanner.c ~~ scanner.h }
+
+Extra files are OK, as long as you are in the correct directory. 
+Submissions from the wrong directory
+will be penalized.
+
+Submit your program like this:
+
+\begin{verbatim}
+    submit cs100 YYY project3
+\end{verbatim}
+
+Remember to replace \verb!YYY! with your instructor name
+(brown,cordes,lusth).
+
+\section*{Due Date}
+
+The due date for this assignment can be found on the class
+\xlink{schedule}{../schedule.html}.
+
+\end{document}

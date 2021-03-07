@@ -1,0 +1,554 @@
+\documentclass[12pt]{article}
+\usepackage{hyperlatex}
+
+%\usepackage{enumitem}
+\usepackage{ulem}
+\usepackage[compact,medium,sc]{titlesec}
+\usepackage{booktabs}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{pslatex}
+\usepackage{color}
+
+% paragraph style
+
+\setlength\parskip{10pt}
+\setlength\parindent{0in}
+
+\W\newcommand{\sf}{\bf}
+
+\htmltitle{CS100: Project 1}
+\htmldepth{1}
+\htmladdress{\xlink{lusth@cs.ua.edu}{mailto: lusth@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\title{CS100 Honors: Project 1\\
+\date{Revision Date: \today}}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\W\subsubsection*{\xlink{Printable Version}{project1.pdf}}
+\W\htmlrule
+
+\section*{Preamble}
+
+This is your second C assignment.  You may develop your code anywhere,
+but you must ensure it runs correctly when compiled by {\it gcc}
+on a Linux or Unix system
+before submission.
+
+You should read up to and include the textbook chapter
+\xlink{Input with Loops}{../book/index_16.html}
+before starting this project.
+
+%Spring 2009, 2014
+
+\section*{Words!} 
+
+\begin{quote}
+``When I use a word,'' Humpty Dumpty said in rather a scornful tone,
+``it means just what I choose it to mean -- neither more nor less.''
+-- 
+Lewis Carroll, in
+{\it Through the Looking Glass}
+\end{quote}
+
+Create a directory named {\it project1} that hangs off of your 
+{\it cs100} directory. Do your work in that directory.
+
+Your task is to read in the entire corpus of Shakespeare's Plays and Sonnets
+and print out the number of times a particular word occurs.
+
+The corpus can be obtained with this linux command: 
+
+\begin{verbatim}
+    wget troll.cs.ua.edu/cs100/projects/shakespeare.txt
+\end{verbatim}
+
+\section*{Input / output}
+
+The words of interest
+are to be passed as command-line arguments, as in:
+
+\begin{verbatim}
+    $ gcc -Wall -g -o words words.c scanner.c shakes.c
+    $ words xxxx yyyy zzzz
+\end{verbatim}
+
+where {\it xxxx}, {\it yyyy}, and {\it zzzz}
+are the words that are to be counted.
+
+The output of the program should be written to the console.
+
+For example, the command:
+
+\begin{verbatim}
+    words romeo horse alas
+\end{verbatim}
+
+should print out how many times the words ``romeo'',
+``horse'', and ``alas'' appear
+in the corpus.
+
+\section*{What are words?}
+
+To obtain words from a file of text ({\it shakespeare.tex} is a file of text),
+one {\it tokenizes} the file. Tokenizing a file means repeatedly reading
+tokens from the file, where each token is composed of 
+contiguous, non-whitespace characters.
+Suppose the file contained the line:
+
+\begin{verbatim}
+    "O Romeo, Romeo!  wherefore art thou Romeo?"
+\end{verbatim}
+
+Tokenizing this file would yield the following tokens:
+
+\begin{verbatim}
+    "O
+    Romeo,
+    Romeo!
+    wherefore
+    are
+    thou
+    Romeo"?
+\end{verbatim}
+
+To turn these tokens into words, two things must happen.
+First, any punctuation marks must
+be removed. You can do this using the {\it filter} pattern; here is
+the template for destructively filtering a string token:
+
+\begin{verbatim}
+    j = 0;
+    for (i = 0; i < strlen(token); ++i)
+        {
+        if (???)  //test token[i] to see if it is a letter
+            {
+            token[j++] = token[i]
+            }
+        }
+    token[j] = '\0';
+\end{verbatim}
+
+After removing punctuation, the tokens look like:
+
+\begin{verbatim}
+    O
+    Romeo
+    Romeo
+    wherefore
+    are
+    thou
+    Romeo
+\end{verbatim}
+
+The second thing that must be done is to reduce all the
+capital letters to lower case letters.
+This yields the following
+list of words:
+
+\begin{verbatim}
+    o
+    romeo
+    romeo
+    wherefore
+    are
+    thou
+    romeo
+\end{verbatim}
+
+You can force a token to lowercase by destructively mapping the following
+function over all the letters of the token:
+
+\begin{verbatim}
+    char
+    toLower(char ch)   //return lowercase version of ch
+        {
+        if (ch <= 'Z')  //this is true if ch is uppercase
+            return ch + 'a' - 'A';
+        else            //otherwise ch is lowercase, so return it
+            return ch;
+        }
+\end{verbatim}
+            
+\section*{Command-line arguments}
+
+Here is a short C program that prints out all the command
+line arguments:
+
+\begin{verbatim}
+    #include <stdio.h>
+
+    int
+    main(int argc,char **argv)
+        {
+        int i;
+
+        // argv holds the name of the program plus the arguments
+        // look at the length of argv, which is argc
+        // loop through the arguments, skipping the name of the program
+
+        printf("the name of the program is %s\n",argv[0]);
+        for (i = 1; i < argc; ++i)
+            {
+            printf("     argument %d is %s\n",i,argv[i]);
+            }
+
+        return 0;
+        }
+\end{verbatim}
+
+\section*{Reading from a file}
+
+To read from a file, you are required to use the {\it scanner} module, which
+you can retrieve with:
+
+\begin{verbatim}
+    wget http://troll.cs.ua.edu/cs100/projects/scanner.c
+    wget http://troll.cs.ua.edu/cs100/projects/scanner.h
+\end{verbatim}
+
+Run this command in the same directory as your project files.  Here is a
+small program that reads a file full of tokens
+and outputs those tokens 
+(one token per line) to the screen.
+
+\begin{verbatim}
+    #include <stdio.h>
+    #include <stdlib.h>     //for exit
+    #include "scanner.h"
+
+    void readTokens(char *);
+
+    int
+    main(int argc,char **argv)
+        {
+        readTokens("someFileName");
+        return 0;
+        }
+
+    void
+    readTokens(char *fileName)
+        {
+        FILE *fp;
+        char *token;
+        
+        fp = fopen(fileName,"r");
+        if (fp == 0)
+            {
+            fprintf(stderr,"file %s could not be opened for reading\n",fileName);
+            exit(1);
+            }
+
+        // output one token per line
+        token = readToken(fp);
+        while (token != 0)
+            {
+            printf("%s\n",token);
+            free(token);
+            token = readToken(fp);
+            }
+
+        // always close your open files when finished!!
+        fclose(fp);
+        }
+\end{verbatim}
+
+Note that the {\it readToken} function of the {\it scanner}
+module will read
+successively read sequences of contiguous, non-whitespace
+characters as desired. When end-of-file is reached, {\it readtoken}
+return the null pointer.
+
+For your project, you will need to read the file twice. The first time,
+you will count the number of tokens read. The second time, you will
+store the tokens in an array you dynamically allocated. That array,
+of course, will be sized according to the count of tokens.
+
+\section*{Program Organization}
+
+Your program should read and count the tokens. It should
+then dynamically allocate the array to store the tokens and reread
+the file. The second time the file is read,
+the tokens are stored in the array. Next, it should
+destructively filter the tokens in the array, removing punctuation.
+Then it should destructively map the tokens, forcing the letters in each
+token to lowercase.
+Finally, for each word of interest
+it should count the number of times it appears in the resulting word array.
+Your {\it main} should look
+something like this:
+
+\begin{verbatim}
+     int
+     main(int argc,char **argv)
+         {
+         int count;
+
+         // get the list of desired words
+         ...
+
+         // count the raw tokens
+         count = fff("shakespeare.txt");
+
+         // allocate the array
+         tokens = ...
+
+         // make sure the allocation succeeded
+         ...
+
+         // fill the array
+         ggg("shakespeare.txt",tokens);
+         
+         // clean them up
+         hhh(tokens);
+         
+         // take care of CAPITAL LETTERS
+         iii(tokens);
+         
+         // loop through the desired words, counting the occurrences
+         ...
+
+         // free all the tokens
+         ...
+
+         return 0;
+         }
+\end{verbatim}
+
+where {\it fff}, {\it ggg}, should be replaced by the most excellent function
+names you will be using.
+
+These are the functions you will need:
+
+\begin{itemize}
+\item
+    a function ({\it fff} above)
+    that tokenizes the input file, returning a count of the
+    tokens read -- this function implements the counting pattern
+\item
+    a procedure that tokenizes the input file, filling an array of tokens
+    ({\it ggg} above)
+\item
+    a procedure ({\it hhh} above)
+    that receives an array of tokens -- the
+    function loops through an array of tokens, removing punctuation
+    from the tokens  -- this function
+    implements the destructive map pattern using a helper function to deal 
+    with an individual token
+\item
+    a procedure that receives a token and removes its punctuation --
+    this function implements
+    the destructive {\it filter} pattern.
+\item
+    a procedure ({\it iii} above)
+    that loops through an array of tokens, forcing each
+    of the tokens to lowercase --
+    this function
+    implements the destructive map pattern using a helper function to deal
+    with an individual token
+\item
+    a procedure that receives a token and forces each of its characters
+    to lowercase --
+    this function implements the destructive {\it map} pattern.
+\item
+    a procedure that receives an array of desired words
+    and a corpus (an array of
+    words) -- the function loops through the array of desired words, calling
+    a helper function to count the number of times a desired word appears
+    in the corpus -- the function then prints the result for that word
+\item
+    a function that receives a word and a corpus and returns the number
+    of times the work appears in the corpus -- this function implements
+    the filtered-counting pattern
+\end{itemize}
+
+Place your {\it main} function in a 
+file {\it words.c}. Place other functions/procedures
+in a file named
+{\it shakes.c}  and their function signatures into shakes.h.
+Include {\it shakes.h} in {\it words.c}
+with the command:
+
+\begin{verbatim}
+    #include "shakes.h"
+\end{verbatim}
+
+\section*{Stepwise refinement}
+
+Never try to write an entire program in one go. Always implement
+a little bit of what you need to do and test that bit thoroughly
+with a specialized {\it main} function. This technique is known
+as {\it stepwise} {\it refinement}.
+
+\begin{description}
+\item[Level 0]
+Define a function that tokenizes a file, returning a count of
+the number of tokens read.
+For example, your specialized {\it main} for testing
+this function might look something like this:
+
+\begin{verbatim}
+    int
+    main(int argc,char **argv)
+        {
+        int count;
+        count = fff("shakespeare.txt");
+        printf("there are %d tokens\n",count);
+
+        return 0;
+        }
+\end{verbatim}
+
+where {\it fff} is the name of your token counting function.
+From here on out, you may want to test using a smaller file instead of
+the rather large {\it shakespeare.txt}.
+
+\item[Level 1]
+Define a function that tokenizes a file, filling a
+correctly sized array with
+the tokens read.
+Test this function by looping through the array,
+printing each token, one per line.
+For example, your specialized {\it main} might look something like this:
+
+\begin{verbatim}
+    int
+    main(int argc,char **argv)
+        {
+        int i;
+        int count;
+        char **tokens;
+
+        count = fff("shakespeare.txt");
+
+        //allocate the array
+        tokens = ...
+        
+        //test that the allocation suceeded
+        ...
+
+        //fill the array
+        ggg("shakespeare.txt",tokens);
+
+        for (i = 0; i < count; ++i)
+            {
+            printf("%s\n",tokens[i]);
+            }
+
+        return 0;
+        }
+\end{verbatim}
+
+where {\it ggg} is
+the name of your array filling function.
+
+\item[Level 2]
+Define a function that when given a token (as a string), removes
+the punctuation from the string.
+For example, this function should
+convert the string "fall," into the "fall".
+The purpose of this function is to {\it clean} words.
+For testing, your specialized {\it main} might look like:
+
+\begin{verbatim}
+    int
+    main(int argc,char **argv)
+        {
+        char *token = strdup("fall,");
+        print("the token was %s\n",token);
+        jjj(token);
+        print("the clean token is %s\n",token);
+        return 0;
+        }
+\end{verbatim}
+
+where {\it jjj} is replaced by the name of your cleaning function.
+Test your function thoroughly before proceeding.
+
+\item[Level 3]
+Define a function that receives an array of tokens and cleans
+all of the tokens.
+This function uses the function
+defined in Level 2.
+Define a specialized {\it main} similar to that of Level 1.
+Test your function thoroughly before proceeding.
+\item[Level 4]
+Define a function that when given a clean word forces all the
+letters to lowercase.
+Define a specialized {\it main} similar to that of Level 2 for
+testing
+your function thoroughly.
+\item[Level 5]
+Define a function that receives an array of cleaned tokens and decapitalizes
+all of the.
+This function uses the function
+defined in Level 4.
+Define a specialized {\it main} similar to that of Level 3.
+Test your function thoroughly before proceeding.
+\item[Level 6]
+Define a function that receives a word and
+a corpus (an array of lowercase words) and counts the number of
+times the word appears in the corpus.
+Test your function thoroughly with a specialized {\it main}.
+\item[Level 7]
+Define a procedure that receives an array of desired words
+and a corpus
+and prints each word and the number of times it appears in the
+corpus. This function uses the function defined in Level 6.
+This should be your final program.
+\end{description}
+
+\section*{Compliance Instructions}
+
+To make sure that you have implemented your
+program correctly,  this test:
+
+\begin{verbatim}
+    $words scooby doo
+\end{verbatim}
+
+should produce the following output:
+
+\begin{verbatim}
+    scooby appears 0 times
+    doo appears 0 times
+\end{verbatim}
+
+You can check your other outputs on the forum.
+
+\color{red}
+If your code fails with a runtime error while running this test,
+then you will
+receive a zero for this assignment.
+\color{black}
+
+Programs submitted that generate compilation warnings will receive at
+least a 5 point deduction.
+
+Note that your answers do not have to be correct for your program to be graded,
+only that it not fail.
+
+\section*{Submission Instructions}
+
+Change to the directory containing your assignment.  If you are working
+on your USB-stick, run the command:
+
+\begin{verbatim}
+    submit cs100 XXXX project1
+\end{verbatim}
+
+Replace {\it XXXX} with your instructor name.
+
+\section*{Due Date}
+
+The due date for this assignment can be found on the class
+\xlink{schedule}{../schedule.html}.
+
+\end{document}

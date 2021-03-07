@@ -1,0 +1,233 @@
+\documentclass{article}  
+
+\usepackage{booktabs}
+\usepackage{hyperlatex}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{color}
+
+\htmldepth{1}
+\htmltitle{CS 150}
+\htmladdress{lusth@cs.ua.edu}
+\htmlcss{lusth.css}
+
+\T\setlength\parskip{6 pt}
+\T\setlength\parindent{0 in}
+
+\W\newcommand\sc\bf
+
+\title{CS 150~~Programming I\\
+Project 3: Organization}
+
+\author{John C. Lusth}
+\date{Revision Date: \today}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\W\subsubsection*{\xlink{Printable Version}{project3-org.pdf}}
+\W\htmlrule
+
+\section*{Program Organization}
+
+You must follow and implement the functions, procedures,
+and programs described in
+this document to receive any credit.
+
+The stepwise refinement methodology of the previous programming assignment
+exhibited a {\it top-down} approach.  In a top-down approach, the main
+function is sequentially refined until the project is finished. For this
+project, you should take a {\it bottom-up} approach, in which you start
+out by writing the most basic functions and then write higher-level
+functions that call these basic functions, and so on.
+
+\begin{description}
+\item[Level 0]
+    A board can be represented as a two-dimensional array or matrix. A
+    location on the board can be represented as a row and a column.
+    Define a set of functions and procedures
+    for allocating and populating a board,
+    given the specifications from the command line.\W\\
+    \W~
+
+    \begin{itemize}
+        \item One function should allocate an empty board. Two boards will be
+            allocated with this function, one which will hold mine information
+            (the {\it mine} board) and one which holds the covered/uncovered
+            status of each square (the {\it status} board).
+        \item A second procedure should place the desired number of mines on
+            a given {\it mine} board.
+        \item A third function, when given a {\it mine} board and a location,
+            calculates the number of mines adjacent to that location.
+            It does this by checking each of its eight (or fewer) neighbors
+            for mines.
+        \item A fourth procedure should place the number of adjacent mines in
+            each square in a given {\it mine} board (via the third function).
+        \item A fifth procedure should initialize the given {\it status}
+            board so that every square is considered covered.
+    \end{itemize}
+
+    For the {\it mine} board, you will need to decide on a value to
+    represent a mine that is distinguishable from the count of neighboring
+    mines. For example, you can't use the number 1 to represent a mine,
+    since it could also represent a count. For the {\it status} board,
+    you will need a value that represents a covered square and a value
+    to represent an uncovered square.
+
+    Place these functions and procedures in a module named {\it game.c}.
+
+    Write a program named {\it level0.c} that thoroughly tests the
+    board allocation functions and initialization procedures.
+    This program should include the {\it game.h} header and link in
+    the {\it game.o} module.
+
+    Have a rule in your makefile that responds to:
+
+\begin{verbatim}
+        make level0
+\end{verbatim}
+
+\item[Level 1]
+    Define a procedure that displays a board. This procedure is given two
+    boards, a {\it mine} board and a {\it status} board.  As the board is
+    being drawn, the procedure checks the {\it status} board to see if a
+    covering mark should be displayed or if the number of adjacent mines
+    (found on the {\it mine} board) should be displayed.
+
+    Place this procedure in {\it io.c}.
+
+    Write a program named {\it level1.c} that thoroughly tests your display
+    procedure. Your program should print the initial board, manually uncover
+    a few squares, print the board, manually uncover all the squares,
+    and print the board one final time. This program will need to
+    include the {\it game.h} and {\it io.h} header files and link in
+    the {\it game.o} and {\it io.o} modules.
+
+    Have a rule in your makefile that responds to:
+
+\begin{verbatim}
+        make level1
+\end{verbatim}
+
+\item[Level 2]
+    Define an pyrotechnic display procedure. At the start, this procedure
+    should just print the word BOOM.
+
+    This procedure should be placed in {\it io.c}.
+
+    Write a program named {\it level2.c} that 
+    prints the initial board, manually uncover
+    a few squares, prints the board again, and calls the
+    pyrotechnic display procedure.
+
+    Have a rule in your makefile that responds to:
+
+\begin{verbatim}
+        make level2
+\end{verbatim}
+
+\item[Level 3]
+    Define an ``uncovering'' function that, when given a {\it mine}
+    board, a {\it status} board, and a location, uncovers the square on
+    the given board. If the square has no adjacent mines, the function
+    recursively calls itself to uncover all the neighbors of the square.
+    If the function uncovers a square with a mine, it should return
+    1. Otherwise, it should return 0.
+
+    Place this function in {\it game.c}.
+
+    Write a program named {\it level3.c} that 
+    prints the initial board, calls the uncovering function
+    to uncover
+    a square that should have a cascading effect, and prints the board again.
+
+    Have a rule in your makefile that responds to:
+
+\begin{verbatim}
+        make level3
+\end{verbatim}
+
+\item[Level 4]
+    Define a ``end of game'' checking 
+    function that, when given a {\it mine} board and a {\it
+    status} board, returns 0 if all covered squares contain mines and
+    1 otherwise.
+
+    Write a program named {\it level4.c} that 
+    tests the end-of-game checking function thoroughly.
+
+    Have a rule in your makefile that responds to:
+
+\begin{verbatim}
+        make level4
+\end{verbatim}
+
+\item[Level 5]
+    Define a ``move'' function that, when given a {\it mine} board and a {\it
+    status} board, immediately calls the end-of-game checking function.
+    If it returns 0, then the this function should return 2.
+    Otherwise, this function prompts for a location
+    and then uncovers that square
+    using the function from Level 3. If the uncovering function returns
+    a 0, this function should display the board using the procedure from
+    Level 1 and return a 0. If the uncovering function returns a 1, then
+    the pyrotechnic display procedure from Level 2 should be called and
+    a value of 1 returned.
+
+    Note that a return value of zero means the game should continue. A
+    return value of 1 or 2 means the game is over.
+
+    Place this function in {\it io.c}.
+
+    Write a program named {\it level5.c} that 
+    tests the three return values of the move function.
+
+\item[Level 6]
+    Define a ``game loop'' procedure that implements a classic
+    ``reading'' loop for
+    running the game.  The initial {\it mine} and {\it status} boards should
+    be passed to this procedure.
+    Before the loop starts, the move function from Level
+    5 should be called and the return value saved. As long as this saved
+    return value is 0, the loop should run. The body of the loop reruns
+    the move function, resaving the return value.
+    When the loop exits, either call the pyrotechnic display procedure
+    or a congratulatory message.
+
+    Place this procedure in {\it minesweeper.c}
+    along with a 
+    {\it main} function. The {\it main}
+    function should allocate the game boards
+    and then call the game-loop procedure.
+
+    Your final program should consist of {\it minesweeper.c}, {\it game.c},
+    and {\it io.c}, plus the header files.
+
+\item[Level 7]
+    Refine the procedures
+    from Level 1 and Level 2 to make a more spectacular game.
+    Making system calls with the clear utility can make the game look nicer.
+\end{description}
+
+Note, for each function you write at each level, you should use
+top-down stepwise refinement. That is to say, start with the simplest
+version of the function and successively add capability to the function.
+Save each program from each level.
+
+Note also: you should see the following modules when you submit:
+{\it minsweeper.c},
+{\it game.c} and {\it game.h},
+{\it io.c} and {\it io.h},
+{\it level0.c},
+{\it level1.c},
+{\it level2.c},
+{\it level3.c},
+{\it level4.c},
+and {\it level5.c}.
+
+The {\it level} functions will be tested and graded as well as your
+minesweeper program!
+
+\end{document}

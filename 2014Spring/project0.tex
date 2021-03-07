@@ -1,0 +1,242 @@
+\documentclass[12pt]{article}
+\usepackage{hyperlatex}
+
+%\usepackage{enumitem}
+\usepackage{ulem}
+\usepackage[compact,medium,sc]{titlesec}
+\usepackage{booktabs}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{pslatex}
+\usepackage{color}
+
+% paragraph style
+
+\setlength\parskip{10pt}
+\setlength\parindent{0in}
+
+\W\newcommand{\sf}{\bf}
+
+\htmltitle{CS100: Project 0}
+\htmldepth{1}
+\htmladdress{\xlink{lusth@cs.ua.edu}{mailto: lusth@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\title{CS100 Honors: Project 0\\
+\date{Revision Date: \today}}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\W\subsubsection*{\xlink{Printable Version}{project0.pdf}}
+\W\htmlrule
+
+%Spring 2013
+
+\section*{Preamble}
+
+\begin{quote}
+{\it Imitation is the sincerest form of flattery.}
+-- Aesop
+\end{quote}
+
+Real Computer Scientists abhor reinventing the wheel. 
+So when given the task of writing a program, they search out and find programs
+they feel are similar to the one they need to write.
+They then modify the program, with permission,
+so that it processes the input and
+produces the output
+they desire.
+They accomplish this feat {\it even if they do not completely understand}
+the original program upon which they are basing their new program.
+
+Your task is to take an existing program that computes
+NFL passer rating
+and turn it into a program that computes
+MLB on-base percentage.
+
+\section*{Where to Start}
+
+The first thing you should do is to setup a directory in which you will work.
+Run the following commands in a terminal window, one at a time:
+
+\begin{verbatim}
+    cd
+    cd cs100
+    mkdir project0
+    cd project0
+\end{verbatim}
+
+The first two commands move you into your {\it cs100} directory, while the next
+two create and move into a project directory.
+Now, 
+retrieve the existing program for computing passer rating
+with the command:
+
+\begin{verbatim}
+    wget troll.cs.ua.edu/cs100H/projects/nfl.c
+\end{verbatim}
+
+Compile and run the program, using the following commands in a terminal
+window:
+
+\begin{verbatim}
+    gcc -Wall -g -o nfl nfl.c
+    nfl
+\end{verbatim}
+
+In another terminal window, move into your project directory and run
+the command:
+
+\begin{verbatim}
+    vim nfl.c
+\end{verbatim}
+
+This will allow you to look at the program while it is running in the
+other window.
+Try to figure out what part of the code does what by running the program
+in the other window over and over.
+
+\section*{How to Proceed}
+
+Now, in the first window,
+copy the existing program over into a new file named {\it mlb.c}
+with the command:
+
+\begin{verbatim}
+    cp nfl.c mlb.c
+\end{verbatim}
+
+In the second window, quit {\it vim} and open up the new file, {\it mlb.c}.
+Now begin modifying {\it mlb.c} so that it stops computing 
+NFL passer rating
+and starts computing
+MLB on-base percentage.
+Make one change at a time and test after each change.
+Don't forget the {\it vim}'s undo button in case you introduce an error
+into the code. Once a change is working, make sure you save the file.
+
+You can see the formula for computing MLB on-base percentage
+at
+\xlink{http://en.wikipedia.org/wiki/On-base\_percentage}
+{http://en.wikipedia.org/wiki/On-base\_percentage}
+and the formula for computing NFL passer ratings
+at
+\xlink{http://en.wikipedia.org/wiki/Passer\_rating}
+{http://en.wikipedia.org/wiki/Passer\_rating}.
+Note, the program {\it nfl.c} computes an uncapped version of the NFL 
+passer rating, so the formula used in the program is a little simpler
+than the one shown on Wikipedia.
+
+\section*{Compliance Instructions}
+
+Compile your program, naming the executable {\it mlb}.
+
+Create a file named {\it test.dat} that contains five numbers,
+one per line,
+for which your new program prompts.
+Your program should prompt for the data in the same order as shown
+on the Wikipedia page: hits, walks, hits by pitch, at bats, and
+sacrifice flies.
+Make sure there are no blank lines before, between, or after
+the numbers.
+If you have done this correctly, the command
+(using an 'ell' not a 'one'):
+
+\begin{verbatim}
+    wc -l test.dat
+\end{verbatim}
+    
+should produce the following output:
+
+\begin{verbatim}
+    5 test.dat
+\end{verbatim}
+
+Now, make sure that you have implemented your
+program correctly by running this command:
+    
+\begin{verbatim}
+    cat test.dat | mlb
+\end{verbatim}
+
+This method of running the program is called ``piping in the input from
+a file''.
+When you actually do this, the prompts your program makes for information
+will all be strung together on a single line.
+{\it Don't worry about it; it's a natural consequence of the way the
+program was run.}
+
+Your program should print out clearly the results
+consistent with the five inputs.
+\color{red}
+If your code fails with a runtime error while running this test,
+then you will receive a zero for this assignment.
+\color{black}
+
+Note that your answers do not have to be correct for your program to be graded,
+only that the program does not crash. Of course, correct answers will yield 
+a much higher grade.
+
+Note also that a prerequisite for receiving any credit
+is that your new program be based off the original program.
+
+\section*{Challenges}
+
+Try to get numbers to print like 1.324 instead of 1.3235294117647058.
+You will need to learn about formatting numbers to do this challenge.
+
+Try to get quantity agreement between numbers and their labels. For
+example, the {\it mlb} program, when displaying the input data,
+might output information this way:
+
+\begin{verbatim}
+    hit by pitches: 1
+    at bats: 23
+    sacrifice flies: 1
+\end{verbatim}
+
+Instead, try outputting it this way:
+
+\begin{verbatim}
+     1 hit by pitch
+    23 at bats
+     1 sacrifice fly
+\end{verbatim}
+
+Note the use of ``pitch'' instead of ''pitches'' and 
+``fly'' instead of ``flies''.
+You will need to learn about {\it if} statements to do this challenge.
+
+\section*{Submission Instructions}
+
+Change to the {\it project0} directory containing your assignment.  Do an
+{\it ls} command. You should see something like this:
+
+\begin{verbatim}
+    mlb  mlb.c  nfl  nfl.c  test.dat
+\end{verbatim}
+
+Extra files are OK, as long as you are in the correct directory. 
+Submissions from the wrong directory
+will be penalized.
+
+Submit your program like this:
+
+\begin{verbatim}
+    submit cs100 YYY project0
+\end{verbatim}
+
+Remember to replace \verb!YYY! with your instructor name.
+Note that {\it project0} ends in a zero, not a capital {\it Oh}.
+
+\section*{Due Date}
+
+The due date for this assignment can be found on the class
+\xlink{schedule}{../schedule.html}.
+
+\end{document}

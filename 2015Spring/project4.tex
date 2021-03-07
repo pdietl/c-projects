@@ -1,0 +1,571 @@
+\documentclass[12pt]{article}
+\usepackage{hyperlatex}
+
+%\usepackage{enumitem}
+\usepackage{ulem}
+\usepackage[compact,medium,sc]{titlesec}
+\usepackage{booktabs}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{pslatex}
+\usepackage{color}
+
+% paragraph style
+
+\setlength\parskip{10pt}
+\setlength\parindent{0in}
+
+\W\newcommand{\sf}{\bf}
+
+\htmltitle{CS100: Project 4}
+\htmldepth{1}
+\htmladdress{\xlink{lusth@cs.ua.edu}{mailto: lusth@cs.ua.edu}}
+\htmlcss{lusth.css}
+
+\title{CS100: Project 4\\
+\date{Revision Date: \today}}
+
+\begin{document}
+
+\maketitle
+
+\W\xlink{Printable Version}{project4.pdf}
+
+\section*{Preamble}
+
+\begin{quote}
+{\it The game is afoot!}
+-- Sherlock Holmes
+\end{quote}
+
+The 3-D, immersive, multiplayer video games you are familiar with had
+a humble beginning, the text-based adventure game called
+{\it Colossal Cave}. Even with its primitiveness, the game is surprisingly
+addictive.
+
+You can retrieve a
+version of this game with the command:
+
+\begin{verbatim}
+    wget troll.cs.ua.edu/cs100/projects/advent.tgz
+\end{verbatim}
+
+Unpack the tarball and follow the instructions for compiling
+and running the game in the {\it README} file.
+
+Just like you started your adventure in programming with a hello, world
+program, you will start your adventure in game programming
+by writing a simple, 
+text-based adventure game modeled after
+{\it Colossal Cave}.
+
+\section*{Approach}
+
+A good way to implement a game of this sort is
+to make it as data-driven as possible. A purely data-driven
+game is what is called a {\it game} {\it engine},
+with text files describing the look and feel, as well as the
+actions, of a particular game. A different set of text files
+would be used to describe a different game.
+
+You are to implement your game as data-driven as possible
+(modulo the fact that you are in an introductory class).
+
+\section{Data structures}
+
+The game is composed of a set of locations,
+an adventurer.
+and a set of logic functions (one for each location).
+
+\subsection{Locations}
+
+Locations are to be read in from a file that
+describes the connections. Here is a possible location description
+in such a file:
+
+\begin{verbatim}
+name great_chamber
+    longer
+       "You are in a great chamber. Stalactites hang down, almost touching
+        the stalagmites growing up from the cavern floor. There are so many
+        glow-worms on the walls, it is too bright to see much of anything."
+    shorter
+       "You are in the great chamber; it is too bright to see much of anything."
+    north maze_1
+    south muddy_passage
+    logic great_chamber_logic
+    item key
+    item lantern
+    item hat
+    ;
+\end{verbatim}
+
+Each location is described by a series of attribute-value pairs; the first
+pair has the attribute {\it name} followed by the name of the location,
+the value {\it great\_chamber}.
+The order of the attribute-value pairs and whether or not all attributes must
+be present and in a particular order is up to you.
+
+Each location can be modeled as a structure.
+Here is a possible structure definition consistent with the above
+location description:
+
+\begin{verbatim}
+    typedef struct location
+        {
+        char *name;
+        int visited;
+        char *longer;
+        char *shorter;
+        char *north;
+        char *south;
+        char *east;
+        char *west;
+        char *logic;
+        char *items[MAX_ITEMS];
+        } Location;
+\end{verbatim}
+
+When reading in a single location, your program should dynamically
+allocate a structure and fill it in with the values read.
+Code like the following might suffice:
+
+\begin{verbatim}
+    loc = malloc(sizeof(Location));
+    attr = readToken(fp);
+    if (feof(fp)) return 0; //no more locations
+    while (strcmp(attr,";") != 0) 
+        {
+        if (strcmp(attr,"name") == 0)
+            loc->name = readToken(fp);
+        else if (strcmp(attr,"longer") == 0)
+            loc->longer = readString(fp);
+        else if (strcmp(attr,"item") == 0)
+            addItemToLocation(loc,readToken(fp));
+        else if (strcmp(attr,"north") == 0)
+            loc->north = readToken(fp);
+        ...
+        attr = readToken(fp);
+        }
+\end{verbatim}
+
+The entire set of locations
+(known as the {\it game} {\it world})
+can be modeled as a linked list.
+Each node in
+the list has a value pointer that
+corresponds to a location in the game world:
+
+\begin{verbatim}
+    typedef struct node
+        {
+        Location *place;
+        struct node *next;
+        } Node;
+\end{verbatim}
+
+Your game should read in a file of locations,
+allocate a structure for each location, 
+and store the structures in a linked list.
+The variable pointing to the linked list can be
+a global variable. If the global is named {\it world}, for example:
+
+\begin{verbatim}
+    Node *world;
+\end{verbatim}
+
+then place this line in all modules that want to access the global:
+
+\begin{verbatim}
+    extern Node *world;
+\end{verbatim}
+
+You must have at least ten locations in your game. So {\it world} would
+need to point to a list of length ten or more.
+
+\subsection{The adventurer}
+
+The adventurer is also modeled with a structure. Such a structure
+might look something like this:
+
+\begin{verbatim}
+    typedef struct adventurer
+        {
+        int score;
+        int strength;
+        char *items[MAX_ITEMS];
+        } Adventurer;
+\end{verbatim}
+
+The {\it items} array is an optional part of the game and
+is used to collect objects from the locations the adventurer visits.
+You should initialize the items array to null pointers. That way,
+you can add an item by finding a slot that holds a null pointer and
+placing the item there. Removing the item would be as simple as finding
+its location and setting that slot to zero.
+
+You may want to give strength points or take away strength points from
+the adventurer as the game progresses. Strength points, however,
+are entirely optional and you may add other variables to the structure
+as you see fit.
+
+\subsection*{Logic functions}
+
+You will need a logic function for each location in the game world.
+Here is a simple logic function that just allows moves to a new
+location:
+
+\begin{verbatim}
+    Location *
+    basic_location_logic(Adventurer *a,Location *b,char *verb,char *noun)
+        {
+        Location *B = b;      //assume next location B is the current one
+        b->visited = 1;
+        if (strcmp(verb,"north") == 0)
+            B = findLocation(b->north);
+        else if (strcmp(verb,"south") == 0)
+            B = findLocation(b->south);
+        else if (strcmp(verb,"east") == 0)
+            B = findLocation(b->east);
+        else if (strcmp(verb,"west") == 0)
+            B = findLocation(b->west);
+        else
+            printf("I can't do that.\n");
+
+        if (B == 0)
+            return b;
+        else
+            return B; //B should hold the next location
+        }
+\end{verbatim}
+
+If you make this the logic function of all your locations, you should
+be able to move around your world (provided you implement 
+{\it findLocation}). Note: the intent of the {\it visited} field
+is that the longer description of the location is given upon first visitation
+and the shorter description given upon subsequent visitations.
+
+Here is a sample logic function that shows a bit more sophistication:
+
+\begin{verbatim}
+    Location *
+    great_chamber_logic(Adventurer *a,Location *b,char *verb,char *noun)
+        {
+        Location *B = b;      //assume next location B is the current one
+        b->visited = 1;
+        if (strcmp(verb,"what") == 0)
+            displayItems(a);
+        else if (strcmp(verb,"drop") == 0)
+            dropItem(noun,a,b);              //move item from a to b
+        else if (strcmp(verb,"say") == 0)
+            printf("your words seem to have no effect\n");
+        else if (hasItem(a,"sunglasses"))
+            {
+            if (strcmp(verb,"look") == 0)
+                displayLongDescriptionWithItems(b);
+            else if (moveIsDesired(verb))
+                B = findLocation(b,verb);
+            else if (strcmp(verb,"get") == 0)
+                getItem(noun,a,b);           //move item from b to a
+            else
+                printf("I don't understand.\n");
+            }
+        else if (strcmp(verb,"look") == 0)
+            displayLongDescription(b);
+        else
+            printf("It is so bright, I can't do that.\n");
+
+        return B; //B should hold the next location
+        }
+\end{verbatim}
+
+In this example, the intent is that the adventurer must have the
+sunglasses to get out of the chamber. If the user is carrying sunglasses,
+then the adventurer can move about. If the adventurer enters the
+chamber without them, then he or she is trapped for eternity.
+
+Also, in our example, the adventurer can only move north and south
+(with sunglasses). If the adventurer tries to move, say, east,
+the {\it findLocation} function should print an appropriate message and
+then return the current location (since the adventurer tried to move
+somewhere he or she cannot and therefore must stay in the current location).
+
+Finally, the {\it dropItem} should remove the given object from the
+adventures {\it items} lists and add it to the location's items list.
+
+Each of your locations will have an associated logic function. In some
+instances, it may be appropriate for locations to share a logic function.
+(e.g. the {\it basic\_location\_logic}).
+
+\section*{The game core}
+
+After reading in the set of locations,
+start the game by choosing one of the locations as the starting location.
+The core of your game is a loop that performs the following actions:
+
+\begin{verbatim}
+    location = getFirstLocation();
+    while (location != 0)
+        {
+        //display the current location
+        //get a legal utterance
+        //find the logic function associated with the current location
+        //call the logic function, resesting the location with the return value
+        }
+\end{verbatim}
+
+You can end the game by having the logic function return zero when a
+winning condition is determined:
+
+\subsection*{Getting a legal utterance}
+
+The minimum set of utterances (commands) that your game should understand are:
+
+\begin{verbatim}
+north         move to the location to the north
+south         move to the location to the south
+east          move to the location to the east
+west          move to the location to the west
+look          describes the current location, what can be found there,
+              what can be seen in the four directions, and all information
+              about the adventurer (e.g. items held, strength points).
+\end{verbatim}
+
+You may find other utterances useful:
+
+\begin{verbatim}
+get <object>  pick up an object
+drop <object> release an object
+say <word>    speak
+\end{verbatim}
+
+You may add other commands (and abbreviations for commands)
+as you see fit. The utterance should be broken up into verb and noun,
+where the first token in the utterance
+is considered the verb and the second the noun.
+For example, the utterance ``get keys'' would have a verb of
+``get'' and a noun of ``keys''. The utterance ''north'' would have
+a verb ``north'' and a null noun.
+
+Your game should be rated \verb!eC!, \verb!E!, \verb!E10+!, or \verb!T!
+(see \xlink{http://www.esrb.org/esrbratings\_guide.asp}
+           {http://www.esrb.org/esrbratings\_guide.asp}).
+
+\subsection*{Finding and calling a logic function}
+
+A logic-function finder would take the name of the logic
+function and return a pointer to the logic function with that name.
+A function
+pointer can then
+be called as if it were a defined function name. To do this,
+first we make a logic function type:
+
+\begin{verbatim}
+    typedef Location *(*Logic)(Adventurer *,Location *,char *,char *);
+\end{verbatim}
+
+With this typedef, we can use the name {\it Logic} to define pointers
+to logic functions. With the typedef,
+the following variable definitions are
+equivalent:
+
+\begin{verbatim}
+    //create a variable f that can point to a logic function
+    Location *(*f)(Adventurer *,Location *,char *,char *);
+    Logic f;
+\end{verbatim}
+
+We can use a function pointer to find and call a logic function:
+
+\begin{verbatim}
+    //create a holder for the name of the logic function
+    char *logicName = currentLocation->logic;
+
+    //create a function pointer f; f can point to a logic function
+    Logic f;
+
+    //retrieve the logic function and store it in the pointer f
+    f = findLogicFunction(logicName);
+
+    //call the logic function through f
+    f(adventurer,currentLocation,verb,noun);
+\end{verbatim}
+
+Unfortunately in C, there is no easy way to turn a string into
+a function. However, an if-else\_if-else chain
+can be used to search for the proper function:
+
+\begin{verbatim}
+    Logic g;
+
+    if (strcmp(logicName,"basic_location_logic") == 0)
+        g = basic_location_logic;
+    else (strcmp(logicName,"great_chamber_logic") == 0)
+        g = great_chamber_logic;
+    else if (strcmp(logicName,"muddy_passage_logic") == 0)
+        g = muddy_passage_logic;
+    ...
+    else
+        {
+        fprintf(stderr,"INTERNAL ERROR: logic function %s not found\n",logicName);
+        exit(-1);
+        }
+
+    return g;
+\end{verbatim}
+
+Note that the intent of this code
+fragment is to store the proper logic function 
+in the function pointer named {\it g} and then return the value
+of this pointer.
+
+There is a sample program that illustrates using a typedef in this
+manner for finding and calling logic functions:
+
+\begin{verbatim}
+    wget troll.cs.ua.edu/cs100/projects/typedef.c
+\end{verbatim}
+
+Base your code off of that example.
+
+\subsection*{Changing the location}
+
+The {\it findLocation} function returns the new location associated
+with a successful
+move. Th location found is then returned by the logic function.
+The main loop that is controlling the game then sets the current
+location to this return value. Of course, if an illegal move is
+requested or a move is not requested at all, the logic function
+returns the current location and the adventurer stays in the same place
+
+\section*{Step-wise refinement}
+
+Here is one possible path to a working implementation:
+
+\begin{itemize}
+\item
+Define a function to read in a location. Then, print the details
+of the location.
+
+\item
+Define a function that reads in a series of locations (into a linked list).
+Then, print the details of each location.
+
+\item
+Define a series of logic functions. Define a function that takes the
+string name of the function and returns a pointer to that function.
+Call the returned function to make sure everything works. You can
+simplify the logic of the function to a print a simple statement
+and to return the current location.
+
+\item
+Point all your locations to the {\it basic\_location\_logic} function.
+Your game should now allow you to move through your game world.
+
+\item
+For extra credit:
+revise your logic functions further, one at a time, so that they
+have there full logic. Test each location thoroughly with all
+legal utterances.
+\end{itemize}
+
+\section*{Documentation}
+
+As always,
+you should identify the author of any code you submit.  Document any
+code that is not obvious to a relatively sophisticated reader.
+
+Provide a file named {\it README} that describes how to play the game.
+In the case of incomplete programs, your README should document what
+capabilities your program does have.
+
+Provide another file named {\it MAP.jpg} that contains a picture
+of the map of your game world. You may hand draw the map if you wish.
+
+Provide a third file named {\it PUZZLE} that contains the contains
+the utterances that solve the puzzle and win the game.
+
+\section*{Compliance}
+
+The name of your executable should be {\it game100}.
+
+You must supply a makefile that responds to the following commands:
+
+\begin{verbatim}
+    make 
+    make clean
+    make run
+    make puzzle
+\end{verbatim}
+
+The first command should build your project while the second should delete
+the executable and object files. The third command should run the game
+with input from the keyboard:
+
+\begin{verbatim}
+    run: game100
+        game100
+\end{verbatim}
+
+while the fourth command should run the game with the {\it PUZZLE} file, as in:
+
+\begin{verbatim}
+    puzzle: game100
+        cat PUZZLE | game100
+\end{verbatim}
+
+When \verb!make puzzle! command is invoked, the game should run automatically
+to its conclusion.
+
+The first rule in your makefile should be the {\it game100} rule.
+The {\it run} and {\it puzzle} rules should have {\it game100} as a dependency.
+
+In the case of incomplete programs,
+your {\it puzzle} rule
+of the makefile
+should print approriate
+messages, as in:
+
+\begin{verbatim}
+    puzzle : game100
+        echo The program only prints out the locations
+\end{verbatim}
+
+\section*{Grading}
+
+Points will be deducted
+for not adhering to the specifications given in this document and the
+syllabus. Points will be deducted for bad style, especially unreasonable
+amounts of duplicated code, as well as for sloppy formatting, insufficient
+or overly verbose documentation, compiler warnings, run-time crashes,
+and other such transgressions. You will receive no credit if your program
+does not compile.
+
+A small amount of credit (25 points)
+will be awarded to a program that can just
+read in locations into a linked list and then display the locations
+in that list. Deductions described previously apply when appropriate.
+
+Full credit (100 points) will be given if 
+the adventurer can move around the
+game world. The only logic that needs to be implemented is
+for moving to a new location (i.e., no puzzle, no items).
+Deductions described previously apply when appropriate.
+
+Exceptionally entertaining implementations that use sophisticated
+logic and the use of items to solve a puzzle will receive a bonus of up
+to 50 points.
+
+\section*{Submitting the assignment}
+
+To submit your assignment, run a make clean command and then type
+the command:
+
+\begin{verbatim}
+    submit cs100 YYY project4
+\end{verbatim}
+
+where {\it YYY} is your instructor drop box name.
+
+\end{document}
